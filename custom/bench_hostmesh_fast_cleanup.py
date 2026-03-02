@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark host-only torus build time with fast cleanup."""
+"""Benchmark Linux-bridge torus build time with fast cleanup."""
 
 import argparse
 import time
@@ -7,7 +7,7 @@ import time
 from mininet.clean import cleanup
 from mininet.net import Mininet
 
-from custom.hostmesh_torus import HostMeshTorusTopo
+from custom.hostmesh_torus_lxbr import HostMeshTorusLinuxBridgeTopo
 
 
 def fast_stop_hosts_only(net):
@@ -18,7 +18,7 @@ def fast_stop_hosts_only(net):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build host-only torus and use fast cleanup."
+        description="Build Linux-bridge torus and use fast cleanup."
     )
     parser.add_argument("--x", type=int, default=20, help="torus x dimension")
     parser.add_argument("--y", type=int, default=25, help="torus y dimension")
@@ -45,7 +45,7 @@ def main():
     if not args.skip_pre_cleanup:
         cleanup()
 
-    topo = HostMeshTorusTopo(x=args.x, y=args.y)
+    topo = HostMeshTorusLinuxBridgeTopo(x=args.x, y=args.y)
     net = Mininet(topo=topo, controller=None, build=False)
 
     t0 = time.time()
@@ -66,10 +66,11 @@ def main():
     if not args.skip_post_cleanup:
         cleanup()
 
-    nodes = args.x * args.y
-    links = 2 * nodes
+    hosts = args.x * args.y
+    bridges = 2 * hosts
+    links = 4 * hosts
     print(
-        f"nodes={nodes} links={links} mode={cleanup_mode} "
+        f"hosts={hosts} bridges={bridges} links={links} mode={cleanup_mode} "
         f"build_s={t1 - t0:.3f} cleanup_s={t3 - t2:.3f} total_s={t3 - t0:.3f}"
     )
 
