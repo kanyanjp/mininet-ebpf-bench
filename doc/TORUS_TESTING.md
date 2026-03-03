@@ -2,11 +2,11 @@
 
 ## Goal
 
-Benchmark Mininet custom **host-only torus** build performance with consistent commands and metrics.
+Benchmark Mininet custom **Linux-bridge torus** build performance with consistent commands and metrics.
 
 ## Files
 
-- Topology: `custom/hostmesh_torus.py`
+- Topology: `custom/hostmesh_torus_lxbr.py`
 - Benchmark: `custom/bench_hostmesh_fast_cleanup.py`
 
 ## Pre-run
@@ -19,6 +19,13 @@ sudo PYTHONPATH=. python3 bin/mn -c
 
 ```bash
 sudo PYTHONPATH=. python3 custom/bench_hostmesh_fast_cleanup.py --x <X> --y <Y>
+```
+
+Use shared-netns mode to reduce end-to-end runtime skew from global cleanup:
+
+```bash
+sudo PYTHONPATH=. python3 custom/bench_hostmesh_fast_cleanup.py \
+  --x <X> --y <Y> --shared-netns mnbench-hostmesh
 ```
 
 Examples:
@@ -40,6 +47,25 @@ sudo PYTHONPATH=. python3 custom/bench_hostmesh_fast_cleanup.py --x 80 --y 50
 - Ignore for scaling conclusion: `cleanup_s`, `total_s`
 
 Reason: cleanup strategy can vary (`fast_hosts_only` vs `full_stop`) and skews non-build comparisons.
+
+## Scale Notes
+
+- 8k hostmesh example (`x=100,y=80`) creates:
+  - `hosts=8000`
+  - `bridges=16000`
+  - total Mininet nodes needing PTYs can exceed default kernel limits.
+- Before large runs, verify PTY capacity:
+
+```bash
+cat /proc/sys/kernel/pty/max
+cat /proc/sys/kernel/pty/nr
+```
+
+- If needed:
+
+```bash
+sudo sysctl -w kernel.pty.max=65536
+```
 
 ## Output Artifacts
 
