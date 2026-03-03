@@ -2,11 +2,14 @@
 
 ## Goal
 
-Benchmark Mininet custom **Linux-bridge torus** build performance with consistent commands and metrics.
+Benchmark Mininet custom **hostmesh torus** build performance with consistent commands and metrics.
+Default benchmark mode is **direct host-to-host**.
 
 ## Files
 
-- Topology: `custom/hostmesh_torus_lxbr.py`
+- Topologies:
+  - Direct: `custom/hostmesh_torus.py`
+  - Linux-bridge: `custom/hostmesh_torus_lxbr.py`
 - Benchmark: `custom/bench_hostmesh_fast_cleanup.py`
 
 ## Pre-run
@@ -19,6 +22,15 @@ sudo PYTHONPATH=. python3 bin/mn -c
 
 ```bash
 sudo PYTHONPATH=. python3 custom/bench_hostmesh_fast_cleanup.py --x <X> --y <Y>
+```
+
+Mode selection:
+
+```bash
+# default
+--mode direct
+# optional
+--mode lxbr
 ```
 
 Use shared-netns mode to reduce end-to-end runtime skew from global cleanup:
@@ -51,9 +63,9 @@ Reason: cleanup strategy can vary (`fast_hosts_only` vs `full_stop`) and skews n
 ## Scale Notes
 
 - 8k hostmesh example (`x=100,y=80`) creates:
-  - `hosts=8000`
-  - `bridges=16000`
-  - total Mininet nodes needing PTYs can exceed default kernel limits.
+  - direct mode: `hosts=8000`, `bridges=0`
+  - lxbr mode: `hosts=8000`, `bridges=16000`
+- PTY pressure is much higher in `lxbr` mode; verify limits before large runs.
 - Before large runs, verify PTY capacity:
 
 ```bash

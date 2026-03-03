@@ -5,7 +5,7 @@ This repository is currently focused on **torus topology performance testing** i
 ## Scope
 
 - Custom host-only torus topology (no switches): `custom/hostmesh_torus.py`
-- Fast build benchmark script: `custom/bench_hostmesh_fast_cleanup.py`
+- Fast build benchmark script (default direct mode): `custom/bench_hostmesh_fast_cleanup.py`
 - eBPF sampling guide: `doc/EBPF_SAMPLING_MININET.md`
 
 ## Environment
@@ -29,6 +29,9 @@ Run build benchmark (fast cleanup mode):
 ```bash
 sudo PYTHONPATH=. python3 custom/bench_hostmesh_fast_cleanup.py --x 20 --y 25
 ```
+
+Default is direct host-to-host mode (`--mode direct`).
+To run Linux-bridge mode, add `--mode lxbr`.
 
 Interpretation:
 - `build_s`: topology build time (main metric)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark Linux-bridge torus build time with fast cleanup."""
+"""Benchmark hostmesh torus build time with fast cleanup."""
 
 import argparse
 import os
@@ -10,6 +10,7 @@ import time
 from mininet.clean import cleanup
 from mininet.net import Mininet
 
+from custom.hostmesh_torus import HostMeshTorusTopo
 from custom.hostmesh_torus_lxbr import HostMeshTorusLinuxBridgeTopo
 
 
@@ -47,6 +48,8 @@ def run_in_shared_netns(args):
         str(args.x),
         "--y",
         str(args.y),
+        "--mode",
+        args.mode,
         "--skip-pre-cleanup",
         "--skip-post-cleanup",
         "--_inner-shared-netns",
@@ -92,10 +95,16 @@ def run_in_shared_netns(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build Linux-bridge torus and use fast cleanup."
+        description="Build hostmesh torus (direct or lxbr) and use fast cleanup."
     )
     parser.add_argument("--x", type=int, default=20, help="torus x dimension")
     parser.add_argument("--y", type=int, default=25, help="torus y dimension")
+    parser.add_argument(
+        "--mode",
+        choices=("direct", "lxbr"),
+        default="direct",
+        help="topology mode: direct host-to-host links or linux-bridge-per-edge",
+    )
     parser.add_argument(
         "--skip-pre-cleanup",
         action="store_true",
@@ -132,7 +141,14 @@ def main():
     if not args.skip_pre_cleanup:
         cleanup()
 
-    topo = HostMeshTorusLinuxBridgeTopo(x=args.x, y=args.y)
+    if args.mode == "direct":
+        topo = HostMeshTorusTopo(x=args.x, y=args.y)
+        bridges = 0
+        links = 2 * args.x * args.y
+    else:
+        topo = HostMeshTorusLinuxBridgeTopo(x=args.x, y=args.y)
+        bridges = 2 * args.x * args.y
+        links = 4 * args.x * args.y
     net = Mininet(topo=topo, controller=None, build=False)
 
     t0 = time.time()
@@ -154,10 +170,9 @@ def main():
         cleanup()
 
     hosts = args.x * args.y
-    bridges = 2 * hosts
-    links = 4 * hosts
     print(
-        f"hosts={hosts} bridges={bridges} links={links} mode={cleanup_mode} "
+        f"hosts={hosts} bridges={bridges} links={links} topo_mode={args.mode} "
+        f"mode={cleanup_mode} "
         f"build_s={t1 - t0:.3f} cleanup_s={t3 - t2:.3f} total_s={t3 - t0:.3f}"
     )
 
