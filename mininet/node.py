@@ -60,9 +60,10 @@ import select
 from re import findall
 from subprocess import Popen, PIPE
 from sys import exit  # pylint: disable=redefined-builtin
-from time import sleep
+from time import sleep, time as now
 
 from mininet.log import info, error, warn, debug
+from mininet.cmdprofile import record_command_timing
 from mininet.util import ( quietRun, errRun, errFail, moveIntf, isShellBuiltin,
                            numCores, retry, mountCgroups, BaseString, decode,
                            encode, getincrementaldecoder, Python3, which,
@@ -382,11 +383,15 @@ class Node( object ):
         verbose = kwargs.get( 'verbose', False )
         log = info if verbose else debug
         log( '*** %s : %s\n' % ( self.name, args ) )
+        start = now()
         if self.shell:
             self.sendCmd( *args, **kwargs )
-            return self.waitOutput( verbose )
+            out = self.waitOutput( verbose )
+            record_command_timing( 'Node.cmd', args, now() - start )
+            return out
         else:
             warn( '(%s exited - ignoring cmd%s)\n' % ( self, args ) )
+        record_command_timing( 'Node.cmd', args, now() - start )
         return None
 
     def cmdPrint( self, *args):

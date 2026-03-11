@@ -13,9 +13,10 @@ from resource import getrlimit, setrlimit, RLIMIT_NPROC, RLIMIT_NOFILE
 from select import poll, POLLIN, POLLHUP
 from subprocess import call, check_call, Popen, PIPE, STDOUT
 from sys import exit  # pylint: disable=redefined-builtin
-from time import sleep
+from time import sleep, time as now
 
 from mininet.log import output, info, error, warn, debug
+from mininet.cmdprofile import record_command_timing
 
 # pylint: disable=too-many-arguments
 
@@ -153,6 +154,7 @@ def errRun( *cmd, **kwargs ):
         cmd = " ".join( arg for arg in cmd )
     debug( '*** errRun:', cmd, '\n' )
     # pylint: disable=consider-using-with
+    start = now()
     popen = Popen( cmd, stdout=PIPE, stderr=stderr, shell=shell )
     # We use poll() because select() doesn't work with large fd numbers,
     # and thus communicate() doesn't work either
@@ -196,6 +198,7 @@ def errRun( *cmd, **kwargs ):
     popen.stdout.close()
     if stderr == PIPE:
         popen.stderr.close()
+    record_command_timing( 'errRun', cmd, now() - start )
     debug( out, err, returncode )
     return CmdResult( out, err, returncode )
 

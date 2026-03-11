@@ -8,6 +8,9 @@ import sys
 import time
 
 from mininet.clean import cleanup
+from mininet.cmdprofile import reset as profile_reset
+from mininet.cmdprofile import set_enabled as profile_set_enabled
+from mininet.cmdprofile import snapshot as profile_snapshot
 from mininet.net import Mininet
 
 from custom.fattree_direct import FatTreeDirectTopo
@@ -51,6 +54,8 @@ def run_in_shared_netns(args):
     ]
     if args.full_stop:
         inner.append("--full-stop")
+    if args.disable_cmd_profile:
+        inner.append("--disable-cmd-profile")
 
     try:
         result = subprocess.run(inner, env=env)
@@ -119,6 +124,11 @@ def main():
         help="run benchmark in this dedicated netns and delete it after run",
     )
     parser.add_argument(
+        "--disable-cmd-profile",
+        action="store_true",
+        help="disable Mininet command timing profile during build",
+    )
+    parser.add_argument(
         "--_inner-shared-netns",
         action="store_true",
         help=argparse.SUPPRESS,
@@ -140,9 +150,15 @@ def main():
     topo = FatTreeDirectTopo(k=args.k)
     net = Mininet(topo=topo, controller=None, build=False)
 
+    profile_enabled = not args.disable_cmd_profile
+    profile_set_enabled(profile_enabled)
+    if profile_enabled:
+        profile_reset()
+
     t0 = time.time()
     net.build()
     t1 = time.time()
+    prof = profile_snapshot() if profile_enabled else None
 
     if args.full_stop:
         t2 = time.time()
@@ -158,11 +174,25 @@ def main():
     if not args.skip_post_cleanup:
         cleanup()
 
+    total_ms = int(round((t1 - t0) * 1000.0))
+    extra_metrics = ""
+    if profile_enabled:
+        netlink_ack_ms = int(round(prof["ip_link_s"] * 1000.0))
+        ack_pct = (100.0 * netlink_ack_ms / total_ms) if total_ms > 0 else 0.0
+        node_ms = max(0, total_ms - netlink_ack_ms)
+        extra_metrics = (
+            f" total_ms={total_ms} netlink_ack_ms={netlink_ack_ms} "
+            f"ack_pct={ack_pct:.2f}% node_ms={node_ms}"
+        )
+    else:
+        extra_metrics = f" total_ms={total_ms}"
+
     print(
         f"k={args.k} hosts={hosts} links={links} "
         f"pod_count={args.k} nodes_per_pod={args.k * half} "
         f"mode={cleanup_mode} "
         f"build_s={t1 - t0:.3f} cleanup_s={t3 - t2:.3f} total_s={t3 - t0:.3f}"
+        f"{extra_metrics}"
     )
 
 

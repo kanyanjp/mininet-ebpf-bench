@@ -1,0 +1,5 @@
+date,kernel,git_commit,topology,k,vnodes,vlinks,sleep_s,cleanup_mode,total_ms,netlink_ack_ms,ack_pct,node_ms
+2026-03-11,6.12.63+deb13-amd64,91f6712,fattree_direct,20,2500,6000,5,fast_hosts_only,64969,21574,33.21,43395
+2026-03-11,6.12.63+deb13-amd64,91f6712,fattree_direct,24,4176,10368,5,fast_hosts_only,132487,47366,35.75,85121
+2026-03-11,6.12.63+deb13-amd64,91f6712,fattree_direct,28,6468,16464,5,fast_hosts_only,294160,117500,39.94,176660
+2026-03-11,6.12.63+deb13-amd64,91f6712,fattree_direct,32,9472,24576,5,fast_hosts_only,625060,280462,44.87,344598
